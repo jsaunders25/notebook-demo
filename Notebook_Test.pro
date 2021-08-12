@@ -1,4 +1,4 @@
-QT       += core gui
+QT       += core gui printsupport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -16,13 +16,21 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    FindDialog.cpp \
+    FontDialog.cpp \
+    NotebookSettings.cpp \
     main.cpp \
     Notebook.cpp
 
 HEADERS += \
-    Notebook.h
+    FindDialog.h \
+    FontDialog.h \
+    Notebook.h \
+    NotebookSettings.h
 
 FORMS += \
+    FindDialog.ui \
+    FontDialog.ui \
     Notebook.ui
 
 # Default rules for deployment.
