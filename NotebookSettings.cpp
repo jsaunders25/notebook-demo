@@ -5,7 +5,7 @@
 NotebookSettings::NotebookSettings()
 {}
 
-void NotebookSettings::writeSettings(QString last_file, QFont font)
+void NotebookSettings::writeSettings(QString last_file, QFont font, bool load_recent, bool word_wrap, bool status_bar)
 {
     QSettings settings("Joshua Saunders", "Notebook");
     settings.beginGroup("Font");
@@ -16,11 +16,17 @@ void NotebookSettings::writeSettings(QString last_file, QFont font)
     settings.endGroup();
 
     settings.beginGroup("Recent");
+    settings.setValue("Load Recent on Startup", load_recent);
     settings.setValue("Last File", last_file);
+    settings.endGroup();
+
+    settings.beginGroup("Editor");
+    settings.setValue("Word Wrap", word_wrap);
+    settings.setValue("Show Status Bar", status_bar);
     settings.endGroup();
 }
 
-void NotebookSettings::readSettings(QString *last_file, QFont *font)
+void NotebookSettings::readSettings(QString *last_file, QFont *font, bool *load_recent, bool *word_wrap, bool *status_bar)
 {
     QSettings settings("Joshua Saunders", "Notebook");
     settings.beginGroup("Font");
@@ -31,6 +37,12 @@ void NotebookSettings::readSettings(QString *last_file, QFont *font)
     settings.endGroup();
 
     settings.beginGroup("Recent");
+    *load_recent = settings.value("Load Recent on Startup", true).toBool();
     *last_file = settings.value("Last File", "").toString();
+    settings.endGroup();
+
+    settings.beginGroup("Editor");
+    *word_wrap = settings.value("Word Wrap", true).toBool();
+    *status_bar = settings.value("Show Status Bar", false).toBool();
     settings.endGroup();
 }
