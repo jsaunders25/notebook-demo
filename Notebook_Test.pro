@@ -19,6 +19,7 @@ SOURCES += \
     FindDialog.cpp \
     FontDialog.cpp \
     NotebookSettings.cpp \
+    PreferencesDialog.cpp \
     main.cpp \
     Notebook.cpp
 
@@ -26,12 +27,14 @@ HEADERS += \
     FindDialog.h \
     FontDialog.h \
     Notebook.h \
-    NotebookSettings.h
+    NotebookSettings.h \
+    PreferencesDialog.h
 
 FORMS += \
     FindDialog.ui \
     FontDialog.ui \
-    Notebook.ui
+    Notebook.ui \
+    PreferencesDialog.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
