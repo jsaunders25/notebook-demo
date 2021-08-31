@@ -8,17 +8,8 @@ class NotebookSettings
 {
 public:
     NotebookSettings();
-    static void writeSettings(QString last_file, QFont font);
-    static void readSettings(QString* last_file, QFont* font);
-
-private:
-    // settings to save in file
-//    QFont m_font;
-//    QString m_last_file;
-//    QQueue<QString> m_recent_files;
-//    QStringList m_file_extensions;
-//    bool m_save_prompt;
-//    QString m_color_scheme;
+    static void writeSettings(QString last_file, QFont font, bool load_recent, bool word_wrap, bool status_bar);
+    static void readSettings(QString* last_file, QFont* font, bool* load_recent, bool* word_wrap, bool* status_bar);
 };
 
 #endif // NOTEBOOKSETTINGS_H
