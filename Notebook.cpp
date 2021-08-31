@@ -7,36 +7,47 @@
 #include <QClipboard>
 #include <QPrinter>
 #include <QPrintDialog>
+#include <QProcess>
 #include "FindDialog.h"
 #include "FontDialog.h"
 #include "NotebookSettings.h"
+#include "PreferencesDialog.h"
 
 #define UNTITLED QString("Untitled")
 
-Notebook::Notebook(QWidget *parent)
+Notebook::Notebook(QString open_file, bool new_file, QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::Notebook)
 {
-    ui->setupUi(this);  // creates instance of the widget
+    ui->setupUi(this);
 
     // Setup Find/Replace Dialog
     find_dialog = new FindDialog(this);
-    connect(find_dialog, SIGNAL(findNext(QString)), this, SLOT(findNext(QString))); // old syntax
-    connect(find_dialog, &FindDialog::findPrev, this, &Notebook::findPrev);         // new syntax https://wiki.qt.io/New_Signal_Slot_Syntax
+    connect(find_dialog, &FindDialog::findNext, this, &Notebook::findNext);
+    connect(find_dialog, &FindDialog::findPrev, this, &Notebook::findPrev);
     connect(find_dialog, &FindDialog::replace, this, &Notebook::replace);
     connect(find_dialog, &FindDialog::replaceAll, this, &Notebook::replaceAll);
 
+    // Setup Clipboard
     clipboard = QGuiApplication::clipboard();
-    connect(clipboard, SIGNAL(dataChanged()), this, SLOT(clipboardChanged()));
+    connect(clipboard, &QClipboard::dataChanged, this, &Notebook::clipboardChanged);
 
-    // Read Settings
+    // Read Settings and Apply CommandLine Args
     QFont font;
-    NotebookSettings::readSettings(&m_current_file_path, &font);
+    NotebookSettings::readSettings(&m_current_file_path, &font, &m_load_recent, &m_word_wrap, &m_status_bar);
+    updatePreferences(m_load_recent, m_word_wrap, m_status_bar);
+
+    // Setup Text Edit
     ui->textEdit->setFont(font);
-    if(m_current_file_path != UNTITLED && !m_current_file_path.isEmpty())
+    if(m_current_file_path != UNTITLED && !m_current_file_path.isEmpty() && open_file.isEmpty() && !new_file && m_load_recent)
         loadFile(m_current_file_path);
+    else if(!open_file.isEmpty() && !new_file)
+        loadFile(open_file);
     else
         newFile();
+
+    // Setup Status Bar
+    connect(ui->textEdit, &QTextEdit::cursorPositionChanged, this, &Notebook::cursorMoved);
 }
 
 Notebook::~Notebook()
@@ -283,7 +294,7 @@ void Notebook::findPrev(QString text)
 /*!
     \fn Notebook::replace(QString original, QString target)
 
-    \brief Replaces the next instance of 'original' with 'target'
+    \brief Replaces the next instance of <original> with <target>
 */
 void Notebook::replace(QString original, QString target)
 {
@@ -303,7 +314,7 @@ void Notebook::replace(QString original, QString target)
 /*!
     \fn Notebook::replaceAll(QString original, QString target)
 
-    \brief Replaces all instances of 'original' with 'target'
+    \brief Replaces all instances of <original> with <target>
 */
 void Notebook::replaceAll(QString original, QString target)
 {
@@ -322,6 +333,12 @@ void Notebook::replaceAll(QString original, QString target)
 void Notebook::clipboardChanged()
 {
     ui->actionPaste->setDisabled(clipboard->text().isEmpty());
+}
+
+void Notebook::cursorMoved()
+{
+    QTextCursor cursor = ui->textEdit->textCursor();
+    ui->statusbar->showMessage("Ln " + QString::number(cursor.blockNumber() + 1) + ", Col " + QString::number(cursor.positionInBlock() + 1));
 }
 
 void Notebook::on_textEdit_redoAvailable(bool b)
@@ -352,7 +369,7 @@ void Notebook::on_actionReplace_triggered()
 
 void Notebook::on_actionFont_triggered()
 {
-    FontDialog font_dialog(ui->textEdit->font());
+    FontDialog font_dialog(ui->textEdit->font(), this);
     connect(&font_dialog, &FontDialog::fontChanged, this, &Notebook::fontChanged);
     font_dialog.exec();
 }
@@ -364,6 +381,38 @@ void Notebook::fontChanged(QFont font)
 
 void Notebook::closeEvent(QCloseEvent *event)
 {
-    NotebookSettings::writeSettings(m_current_file_path, ui->textEdit->font());
+    NotebookSettings::writeSettings(m_current_file_path, ui->textEdit->font(), m_load_recent, m_word_wrap, m_status_bar);
     event->accept();
+}
+
+void Notebook::on_actionNew_Window_triggered()
+{
+    QProcess process;
+    process.startDetached("Notebook_Test.exe", {"n"});
+}
+
+void Notebook::on_actionPreferences_triggered()
+{
+    PreferencesDialog dialog(m_load_recent, m_word_wrap, m_status_bar, this);
+    connect(&dialog, &PreferencesDialog::emitPreferences, this, &Notebook::updatePreferences);
+    dialog.exec();
+}
+
+void Notebook::updatePreferences(bool load_recent, bool word_wrap, bool status_bar)
+{
+    m_load_recent = load_recent;
+    m_word_wrap = word_wrap;
+    m_status_bar = status_bar;
+    if(m_word_wrap)
+        ui->textEdit->setLineWrapMode(QTextEdit::WidgetWidth);
+    else
+        ui->textEdit->setLineWrapMode(QTextEdit::NoWrap);
+
+    if(status_bar)
+    {
+        ui->statusbar->show();
+        cursorMoved();
+    }
+    else
+        ui->statusbar->hide();
 }
