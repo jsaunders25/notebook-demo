@@ -52,6 +52,7 @@ Notebook::Notebook(QString open_file, bool new_file, QWidget *parent)
 
 Notebook::~Notebook()
 {
+    delete find_dialog;
     delete ui;
 }
 
